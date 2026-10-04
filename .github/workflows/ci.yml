@@ -2,7 +2,7 @@ name: CI
 # GitHub-hosted runners only. This repo is public; never use self-hosted runners here.
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 permissions:
   contents: read
