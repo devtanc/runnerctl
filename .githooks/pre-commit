@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Enable with: git config core.hooksPath .githooks
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact || exit 1
+else
+  echo "warning: gitleaks not installed; skipping secret scan" >&2
+fi

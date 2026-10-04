@@ -1,0 +1,32 @@
+name: Release
+# Builds macOS binaries on a tag push. The macOS runner label is a repository
+# variable (MACOS_RUNNER, default macos-latest). Forks may point it elsewhere;
+# this public repo must not use self-hosted runners.
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ${{ vars.MACOS_RUNNER || 'macos-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - name: Build
+        run: |
+          for t in aarch64-apple-darwin x86_64-apple-darwin; do
+            cargo build --release --locked --workspace --target "$t"
+            d="runnerctl-${GITHUB_REF_NAME}-$t"
+            mkdir -p "dist/$d"
+            cp "target/$t/release/runnerctl" "target/$t/release/runnerctl-helper" "dist/$d/"
+            tar -C dist -czf "dist/$d.tar.gz" "$d"
+          done
+          (cd dist && shasum -a 256 ./*.tar.gz > SHA256SUMS)
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/SHA256SUMS

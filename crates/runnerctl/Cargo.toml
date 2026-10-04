@@ -1,0 +1,12 @@
+[package]
+name = "runnerctl"
+description = "TUI and CLI for managing self-hosted GitHub Actions runners"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+runnerctl-core.workspace = true
+
+[lints]
+workspace = true

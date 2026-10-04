@@ -1,0 +1,8 @@
+/target
+*.env
+.env*
+identity*
+*.pem
+*.key
+config.local.toml
+.DS_Store

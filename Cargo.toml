@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = ["crates/runnerctl-core", "crates/runnerctl", "crates/runnerctl-helper"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+
+[workspace.dependencies]
+runnerctl-core = { path = "crates/runnerctl-core", version = "0.1.0" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+[profile.release]
+lto = "thin"
+strip = true

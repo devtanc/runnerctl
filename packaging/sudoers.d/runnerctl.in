@@ -1,0 +1,4 @@
+# Template: filled in by scripts/bootstrap.sh, validated with `visudo -cf`,
+# installed root:wheel mode 0440.
+@ADMIN_USER@ ALL=(@SERVICE_USER@) NOPASSWD: ALL
+@ADMIN_USER@ ALL=(root) NOPASSWD: /usr/local/libexec/runnerctl-helper

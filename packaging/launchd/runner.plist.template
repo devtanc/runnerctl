@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Used only by the root helper. Placeholders are filled from root-owned helper.toml. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>@LABEL@</string>
+  <key>UserName</key><string>@SERVICE_USER@</string>
+  <key>SessionCreate</key><true/>
+  <key>RunAtLoad</key><true/>
+  <key>WorkingDirectory</key><string>@RUNNER_DIR@</string>
+  <key>ProgramArguments</key>
+  <array><string>@RUNNER_DIR@/runsvc.sh</string></array>
+  <key>EnvironmentVariables</key>
+  <dict><key>ACTIONS_RUNNER_SVC</key><string>1</string></dict>
+  <key>StandardOutPath</key><string>@LOG_DIR@/stdout.log</string>
+  <key>StandardErrorPath</key><string>@LOG_DIR@/stderr.log</string>
+</dict>
+</plist>

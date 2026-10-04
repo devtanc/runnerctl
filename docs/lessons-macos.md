@@ -1,0 +1,18 @@
+# Lessons learned: self-hosted runners on macOS (launchd)
+
+Kept current as the tool evolves. Origin: `.planning/PLAN.md`.
+
+1. **Use the runner tarball for the host's architecture.** GitHub's "New runner" page defaults to x64. On Apple Silicon without Rosetta, `config.sh` dies with `Bad CPU type in executable`, so nothing gets registered. Detect the architecture; never assume it. Cross-compiling for Intel (for example Tauri's `--target x86_64-apple-darwin` or `universal-apple-darwin`) needs no x64 runner.
+2. **`svc.sh install` creates a LaunchAgent, not a daemon.** It writes to `~/Library/LaunchAgents`, refuses to run with sudo, and LaunchAgents only load in a logged-in GUI session, so a never-logged-in service user never starts. Run runners as LaunchDaemons in `/Library/LaunchDaemons` (`root:wheel`, `644`), loaded with `launchctl bootstrap system`. The upstream plist template already includes `UserName` and `SessionCreate`, and `SessionCreate` is needed for keychain and codesign work from a daemon.
+3. **A CLI-created, never-logged-in user may be missing `~/Library/LaunchAgents`, and other `~/Library` subfolders may be missing too.** Create what's needed (for example `~/Library/Keychains`, which Tauri uses for its temporary signing keychain).
+4. **Globs on the service user's home expand in the caller's shell.** The admin can't read inside it, which produces "no matches found." Do privileged path work inside the target identity's process; never glob across the permission boundary.
+5. **`.path` is a snapshot** of PATH taken when `config.sh` runs, and the service uses exactly that. Always write `.path` and `.env` from config (including `HOME=<service home>` and `LANG`), because cargo, rustup, mise, and keychain tooling all depend on them.
+6. **Version-manager shims** (for example mise's `~/.local/share/mise/shims`) give a stable PATH entry. Newer mise versions require opting in to `.nvmrc`/`.node-version` (`idiomatic_version_file_enable_tools`).
+7. **Once a runner runs as a daemon, `svc.sh start/stop/status` no longer apply.** Use `launchctl kickstart -k`, `bootout`, and `print`.
+8. **`config.sh remove` refuses while a `.service` file exists**, and it 404s if the repo was **renamed** after registration (the registration endpoint doesn't follow renames). The REST API does follow renames: list with `GET …/actions/runners` and remove with `DELETE …/actions/runners/{id}`. GitHub also auto-removes runners after 14 days offline.
+9. **Scopes:** personal accounts support **repo-level runners only**. Orgs (including Free) support org-level runners through runner groups, and the Default group allows private repos only. Labels look like `actions.runner.<owner>-<repo>.<name>` for repos and `actions.runner.<Org>.<name>` for orgs, preserving the org's casing. The same name can exist in different scopes.
+10. **Capacity:** many runners can all start heavy builds at once and exhaust RAM. Make scope-wide stop and start easy, and show memory pressure on the dashboard.
+11. **Security:** never attach self-hosted runners to public repos, since fork PRs could run code on the host.
+12. **Signing secrets don't belong on the host.** For example, Tauri imports base64 certificates from secrets into a randomly named temporary keychain for each build. Document this pattern in the README; `runnerctl` itself doesn't manage signing.
+13. **FileVault and headless operation:** with FileVault on, the host waits for an unlock after a reboot (newer macOS supports pre-boot SSH unlock). LaunchDaemons start right after unlock with nobody logged in. Anything else the host relies on that runs under a hidden user (for example a container VM hosting a secrets server) has the same LaunchAgent-vs-LaunchDaemon problem.
+
